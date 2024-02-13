@@ -1,8 +1,10 @@
 package BullAndCow;
 
 public interface Game {
-    //Интерфейс взаимодействий Game (должны быть описаны сигнатуры методов start, inputValue,getGameStatus)
-    void start(Integer wordSize, Integer tryCount);
-    Answer inputValue(String value);
+    void start(Integer var1, Integer var2);
+
+    Answer inputValue(String var1);
+
     GameStatus getGameStatus();
+    History getHistory();
 }

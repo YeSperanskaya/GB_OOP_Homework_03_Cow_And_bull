@@ -4,59 +4,80 @@ import java.util.List;
 import java.util.Random;
 
 public abstract class AbstractGame implements Game {
-    abstract List<String> generateCharList();
-
     private String word;
     Integer tryCount;
-    GameStatus gameStatus = GameStatus.INIT;
+    GameStatus gameStatus;
+    History history;
 
-    @Override
-    public void start(Integer wordSize, Integer tryCount) {
-        word = generateWord(wordSize);
-        this.tryCount = tryCount;
-        gameStatus = GameStatus.START;
+    public AbstractGame() {
+        this.gameStatus = GameStatus.INIT;
+        history = new History();
     }
 
-    private String generateWord(Integer wordSize) {
-        List<String> alphabet = generateCharList();
+    abstract List<String> generateCharList();
+
+    public void start(Integer sizeWord, Integer tryCount) {
+        this.word = this.generateWord(sizeWord);
+        this.tryCount = tryCount;
+        this.gameStatus = GameStatus.START;
+    }
+
+    private String generateWord(Integer sizeWord) {
+        List<String> alphabet = this.generateCharList();
         Random rnd = new Random();
-        String result = "";
-        for (int i = 0; i < wordSize; i++) {
+        StringBuilder res = new StringBuilder();
+
+        for(int i = 0; i < sizeWord; ++i) {
             int randomIndex = rnd.nextInt(alphabet.size());
-            result += alphabet.get(randomIndex);
+            res.append(alphabet.get(randomIndex));
             alphabet.remove(randomIndex);
         }
-        return result;
+
+        return res.toString();
     }
 
-    @Override
     public Answer inputValue(String value) {
-        if (!getGameStatus().equals(GameStatus.START)) {
+        if (!this.getGameStatus().equals(GameStatus.START)) {
             throw new RuntimeException("Игра не запущена");
-        }
-        int cowCounter = 0;
-        int bullCounter = 0;
-        for (int i = 0; i < word.length(); i++) {
-            if (value.charAt(i) == word.charAt(i)) {
-                cowCounter++;
-                bullCounter++;
-            } else if (word.contains(String.valueOf(value.charAt(i)))) {
-                cowCounter++;
+        } else {
+            int cowCounter = 0;
+            int bullCounter = 0;
+
+            for(int i = 0; i < this.word.length(); ++i) {
+                if (value.charAt(i) == this.word.charAt(i)) {
+                    ++cowCounter;
+                    ++bullCounter;
+                } else if (this.word.contains(String.valueOf(value.charAt(i)))) {
+                    ++cowCounter;
+                }
             }
+
+            this.tryCount--;
+            if (this.tryCount == 0) {
+                this.gameStatus = GameStatus.LOOSE;
+            }
+
+            if (bullCounter == this.word.length()) {
+                this.gameStatus = GameStatus.WIN;
+            }
+
+//            Добавили логирование действий тут
+            history.addActions("Попытка: " + value + ", результат: " + cowCounter + " коровы, " + bullCounter + " быка");
+
+
+            return new Answer(cowCounter, bullCounter, this.tryCount);
         }
-        tryCount--;
-        if (tryCount == 0){
-            gameStatus = GameStatus.LOOSE;
-        }
-        if (bullCounter == word.length()){
-            gameStatus = GameStatus.WIN;
-        }
-        return new Answer(cowCounter, bullCounter, tryCount);
     }
 
-    @Override
     public GameStatus getGameStatus() {
-        return gameStatus;
+        return this.gameStatus;
     }
 
+    public History getHistory(){
+        return history;
+    }
+
+    public String getWord() {
+        return word;
+    }
 }
